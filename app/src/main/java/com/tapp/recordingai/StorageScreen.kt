@@ -27,18 +27,11 @@ fun Storage(){
             .padding(top = 80.dp)
             .fillMaxWidth()
             .background(Color.White)
-
     ){
         items(30){
             ItemNotes()
-
-
-
         }
-
     }
-
-
 }
 
 @Composable

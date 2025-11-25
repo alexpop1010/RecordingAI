@@ -1,3 +1,22 @@
 <resources>
     <string name="app_name">RecordingAI</string>
+    <string name="ai">"AI Заметки"</string>
+    <string name="notes">"Ваши заметки появятся здесь..."</string>
+    <string name="startRecording">"Начать запись"</string>
+    <string name="settings">"Настройки"</string>
+    <string name="account">"Аккаунт"</string>
+    <string name="status">" Статус аккаунта"</string>
+    <string name="basic">"Базовый"</string>
+    <string name="upToPro">"Повысить до Продвинутый"</string>
+    <string name="prefs">"Предпочтения"</string>
+    <string name="sysLanguage">"Системный язык"</string>
+    <string name="chose">"Выбрать рус/англ"</string>
+    <string name="storage">Хранилище"</string>
+    <string name="deleted">Недавно удаленные"</string>
+    <string name="deleted30">Содержит удаленные за 30 дней заметки"</string>
+    <string name="sup">Поддержка"</string>
+    <string name="writeSup">Написать в поддержку"</string>
+    <string name="privacy">Политика конфиденциальности"</string>
+    <string name="rating">Оценить приложение"</string>
+    <string name="record">Запись"</string>
 </resources>

@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,12 +32,9 @@ fun Recording() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
-            .padding(24.dp),
+            .background(Color.White),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-
         Box(
             modifier = Modifier
                 .padding(top = 40.dp)
@@ -52,28 +50,24 @@ fun Recording() {
                     contentDescription = null,
                     modifier = Modifier.size(36.dp),
                     colorFilter = ColorFilter.tint(Color.White)
-
-
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Начать запись",
+                    text = stringResource(R.string.startRecording),
                     color = Color.White,
                     fontSize = 18.sp
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(60.dp))
-
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth().padding(start=40.dp)
 
         ) {
             Text(
-                text = "AI Заметки",
+                text = stringResource(R.string.ai),
                 fontSize = 20.sp,
                 color = Color.Black
             )
@@ -81,7 +75,7 @@ fun Recording() {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Ваши заметки появятся здесь...",
+                text = stringResource(R.string.notes),
                 fontSize = 14.sp,
                 color = Color.Gray
             )

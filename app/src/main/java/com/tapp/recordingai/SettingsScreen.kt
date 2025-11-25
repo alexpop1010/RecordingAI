@@ -21,15 +21,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
 fun Settings() {
-
-
-
     Column(
         Modifier
             .fillMaxSize()
@@ -37,54 +35,46 @@ fun Settings() {
             .padding(top = 32.dp)
             .background(Color.White)
     ) {
-
-
         Text(
-            text = "Настройки",
+            text = stringResource(R.string.settings),
             fontSize = 22.sp,
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         )
-
-
-        SectionTitle("Аккаунт")
+        SectionTitle(stringResource(R.string.settings))
 
         SimpleRow(
-            title = "Статус аккаунта",
-            rightText = "Базовый"
+            title = stringResource(R.string.account),
+            rightText = stringResource(R.string.basic)
         )
 
         SimpleRow(
-            title = "Повысить до Продвинутый",
+            title = stringResource(R.string.upToPro),
             showArrow = true
         )
 
-
-        SectionTitle("Предпочтения")
-
+        SectionTitle(stringResource(R.string.prefs))
 
         SwitchRow(
-            title = "Системный язык",
-            subtitle = "Выбрать рус/англ",
+            title = stringResource(R.string.sysLanguage),
+            subtitle = stringResource(R.string.chose),
             checked = false,
             onCheckedChange = {}
         )
 
-
-        SectionTitle("Хранилище")
+        SectionTitle(stringResource(R.string.storage))
 
         SimpleRow(
-            title = "Недавно удаленные",
-            subtitle = "Содержит удаленные за 30 дней заметки",
+            title = stringResource(R.string.deleted),
+            subtitle = stringResource(R.string.deleted30),
             showArrow = true
         )
 
+        SectionTitle(stringResource(R.string.sup))
 
-        SectionTitle("Поддержка")
-
-        SimpleRow(title = "Написать в поддержку", showArrow = true)
-        SimpleRow(title = "Политика конфиденциальности", showArrow = true)
-        SimpleRow(title = "Оценить приложение", showArrow = true)
+        SimpleRow(title = stringResource(R.string.writeSup), showArrow = true)
+        SimpleRow(title = stringResource(R.string.privacy), showArrow = true)
+        SimpleRow(title = stringResource(R.string.rating), showArrow = true)
     }
 }
 

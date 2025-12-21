@@ -3,6 +3,7 @@
     <string name="ai">"AI Заметки"</string>
     <string name="notes">"Ваши заметки появятся здесь..."</string>
     <string name="startRecording">"Начать запись"</string>
+    <string name="stopRecording">"Остановить запись"</string>
     <string name="settings">"Настройки"</string>
     <string name="account">"Аккаунт"</string>
     <string name="status">" Статус аккаунта"</string>

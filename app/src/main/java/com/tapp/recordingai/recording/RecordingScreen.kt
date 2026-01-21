@@ -36,15 +36,26 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tapp.recordingai.R
 import com.tapp.recordingai.db.Note
 import com.tapp.recordingai.notes.NoteViewModel
+import androidx.compose.ui.platform.LocalContext
 
+//to do сбрасывать порядковый номер заметок
 
 @Composable
-fun Recording(viewModel: RecordingViewModel = viewModel(), viewModelRec:NoteViewModel = viewModel()) {
+fun Recording(viewModel: RecordingViewModel, viewModelNote:NoteViewModel = viewModel()) {
     val scrollState = rememberScrollState()
+    LaunchedEffect(Unit) {
+        viewModel.getEditText()
+    }
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.initRecognizer(context)
+    }
+
     LaunchedEffect(viewModel.text) {
         scrollState.animateScrollTo(scrollState.maxValue)
     }
-    viewModel.isEditable = viewModel.isRecording
+
 
     Column(
         modifier = Modifier
@@ -65,7 +76,11 @@ fun Recording(viewModel: RecordingViewModel = viewModel(), viewModelRec:NoteView
                     else Color(0xFF42A5F5)
                 )
                 .clickable {
-                    viewModel.isRecording = !viewModel.isRecording
+                    if (viewModel.isRecording) {
+                        viewModel.stopRecording()
+                    } else {
+                        viewModel.startRecording()
+                    }
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -102,9 +117,9 @@ fun Recording(viewModel: RecordingViewModel = viewModel(), viewModelRec:NoteView
 
         Spacer(Modifier.height(8.dp))
 
-        TextField(
+        TextField(                        //закинуть с записи it
             value = viewModel.text,
-            onValueChange = { viewModel.text = it },
+            onValueChange = { viewModel.textChanged(it)},
             placeholder = { Text(stringResource(R.string.notes)) },
             maxLines = Int.MAX_VALUE,
             modifier = Modifier
@@ -127,8 +142,10 @@ fun Recording(viewModel: RecordingViewModel = viewModel(), viewModelRec:NoteView
         Button(
             onClick = {
                 if (viewModel.text.isNotBlank()){
-                    viewModelRec.addNote(Note(noteName = "", text = viewModel.text))
+                    viewModelNote.addNote(Note(noteName = "", text = viewModel.text))
                     viewModel.text = ""
+                    viewModel.deleteEditText()
+
                 }
             },
             enabled = !viewModel.isRecording,
@@ -157,11 +174,3 @@ fun Recording(viewModel: RecordingViewModel = viewModel(), viewModelRec:NoteView
     }
 }
 
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    Recording()
-}

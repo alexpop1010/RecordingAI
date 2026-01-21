@@ -48,13 +48,13 @@ fun NoteScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Back",
+                text = "Назад",
                 fontSize = 18.sp,
                 color = Color.Black,
                 modifier = Modifier.clickable { onBack() }
             )
             Text(
-                text = if (isEditing) "Save" else "Edit",
+                text = if (isEditing) "Сохранить" else "Редактировать",
                 fontSize = 18.sp,
                 color = if (isEditing) Color(0xFF4A40FF) else Color.Black,
                 modifier = Modifier.clickable {
@@ -67,7 +67,7 @@ fun NoteScreen(
         if (isEditing) {
             BasicTextField(
                 value = viewModel.title,
-                onValueChange = { viewModel.title = it },
+                onValueChange = { viewModel.changeTitle(it)},
                 textStyle = TextStyle(fontSize = 30.sp, color = Color.Black),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -92,7 +92,7 @@ fun NoteScreen(
             if (isEditing) {
                 BasicTextField(
                     value = viewModel.text,
-                    onValueChange = { viewModel.text = it },
+                    onValueChange = { viewModel.changeText(it) },
                     textStyle = TextStyle(fontSize = 18.sp, color = Color.Black),
                     maxLines = Int.MAX_VALUE,
                     modifier = Modifier.fillMaxWidth()

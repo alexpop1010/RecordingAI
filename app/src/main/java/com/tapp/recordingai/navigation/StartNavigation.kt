@@ -17,9 +17,10 @@ import com.tapp.recordingai.R
 import com.tapp.recordingai.recording.Recording
 import com.tapp.recordingai.settings.Settings
 import com.tapp.recordingai.notes.Storage
+import com.tapp.recordingai.recording.RecordingViewModel
 
 @Composable
-fun StartNavigation() {
+fun StartNavigation(recordingViewModel: RecordingViewModel) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -122,7 +123,7 @@ fun StartNavigation() {
             startDestination = NavConstants.RECORDING,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(NavConstants.RECORDING) { Recording() }
+            composable(NavConstants.RECORDING) { Recording(viewModel = recordingViewModel) }
             composable(NavConstants.STORAGE) { Storage(navController) }
             composable(NavConstants.SETTINGS) { Settings() }
             composable(NavConstants.NOTE) { backStackEntry ->

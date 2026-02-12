@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tapp.recordingai.db.Note
 import com.tapp.recordingai.R
 
@@ -28,20 +29,28 @@ fun ItemNotes(
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val isProcessing = note.status == NoteStatus.AI_PROCESSING
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFFE0E0E0))
-            .clickable { onClick() }
+            .background(
+                if (isProcessing) Color(0xFFE0E0E0) else Color(0xFFF5F5F5)
+            )
+            .clickable(
+                enabled = !isProcessing
+            ) {
+                onClick()
+            }
             .padding(16.dp)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(end = 16.dp)
+                .padding(end = 40.dp)
         ) {
             Text(
                 text = if (note.noteName.isBlank())
@@ -50,24 +59,36 @@ fun ItemNotes(
                     note.noteName,
                 color = Color.Black
             )
-            Text(
-                text = note.text,
-                maxLines = 1,
-                color = Color.Black
-            )
+
+            if (isProcessing) {
+                Text(
+                    text = "Идёт структурирование…",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+            } else {
+                Text(
+                    text = note.text,
+                    maxLines = 1,
+                    color = Color.Black
+                )
+            }
         }
+
         Icon(
             painter = painterResource(id = R.drawable.delete),
             contentDescription = "Удалить",
-            tint = Color.Black,
+            tint = if (isProcessing) Color.LightGray else Color.Black,
             modifier = Modifier
-                .size(35.dp)
+                .size(28.dp)
                 .align(Alignment.CenterEnd)
-                .clickable { onDelete() }
-                .padding(8.dp)
+                .clickable(enabled = !isProcessing) {
+                    onDelete()
+                }
         )
     }
 }
+
 
 @Preview
 @Composable

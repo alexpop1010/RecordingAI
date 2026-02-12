@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <string name="app_name">RecordingAI</string>
+    <string name="ai">Live notes</string>
+    <string name="notes">Your notes will appear here...</string>
+    <string name="startRecording">Start recording</string>
+    <string name="stopRecording">Stop recording</string>
+    <string name="settings">Settings</string>
+    <string name="account">Account</string>
+    <string name="status">Account status</string>
+    <string name="basic">Basic</string>
+    <string name="upToPro">Upgrade to Pro</string>
+    <string name="prefs">Preferences</string>
+    <string name="sysLanguage">System language</string>
+    <string name="chose">Choose language</string>
+    <string name="storage">Storage</string>
+    <string name="deleted">Recently deleted</string>
+    <string name="deleted30">Contains notes deleted within 30 days</string>
+    <string name="sup">Support</string>
+    <string name="writeSup">Contact support</string>
+    <string name="privacy">Privacy policy</string>
+    <string name="rating">Rate the app</string>
+    <string name="record">Recording</string>
+    <string name="noTitle">No notes yet...</string>
+    <string name="save">Save</string>
+    <string name="note_saved_title">Note saved</string>
+    <string name="note_saved_subtitle">What would you like to do next?</string>
+    <string name="note_saved_structure">Structure with AI</string>
+    <string name="note_saved_keep">Keep as is</string>
+    <string name="yourNote">Your notes</string>
+    <string name="back">Back</string>
+    <string name="recently_deleted">Recently deleted</string>
+    <string name="no_deleted_notes">No deleted notes</string>
+
+</resources>

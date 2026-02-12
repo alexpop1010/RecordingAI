@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">RecordingAI</string>
-    <string name="ai">"AI Заметки"</string>
+    <string name="ai">"Live заметки"</string>
     <string name="notes">"Ваши заметки появятся здесь..."</string>
     <string name="startRecording">"Начать запись"</string>
     <string name="stopRecording">"Остановить запись"</string>
@@ -12,12 +12,23 @@
     <string name="prefs">"Предпочтения"</string>
     <string name="sysLanguage">"Системный язык"</string>
     <string name="chose">"Выбрать рус/англ"</string>
-    <string name="storage">Хранилище"</string>
-    <string name="deleted">Недавно удаленные"</string>
-    <string name="deleted30">Содержит удаленные за 30 дней заметки"</string>
-    <string name="sup">Поддержка"</string>
-    <string name="writeSup">Написать в поддержку"</string>
-    <string name="privacy">Политика конфиденциальности"</string>
-    <string name="rating">Оценить приложение"</string>
-    <string name="record">Запись"</string>
+    <string name="storage">Хранилище</string>
+    <string name="deleted">Недавно удаленные</string>
+    <string name="deleted30">Содержит удаленные за 30 дней заметки</string>
+    <string name="sup">Поддержка</string>
+    <string name="writeSup">Написать в поддержку</string>
+    <string name="privacy">Политика конфиденциальности</string>
+    <string name="rating">Оценить приложение</string>
+    <string name="record">Запись</string>
+    <string name="noTitle">Заметок еще нет...</string>
+    <string name="save">Сохранить</string>
+    <string name="note_saved_title">Заметка сохранена</string>
+    <string name="note_saved_subtitle">Что сделать дальше?</string>
+    <string name="note_saved_structure">Структурировать (AI)</string>
+    <string name="note_saved_keep">Оставить как есть</string>
+    <string name="yourNote">Ваши записи</string>
+    <string name="back">Назад</string>
+    <string name="recently_deleted">Недавно удалённые</string>
+    <string name="no_deleted_notes">Удалённых заметок нет</string>
+
 </resources>

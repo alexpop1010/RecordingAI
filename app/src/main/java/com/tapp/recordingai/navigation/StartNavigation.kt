@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.*
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.tapp.recordingai.DeletedScreen
 import com.tapp.recordingai.NavConstants
 import com.tapp.recordingai.notes.NoteScreen
 import com.tapp.recordingai.R
@@ -125,11 +126,12 @@ fun StartNavigation(recordingViewModel: RecordingViewModel) {
         ) {
             composable(NavConstants.RECORDING) { Recording(viewModel = recordingViewModel) }
             composable(NavConstants.STORAGE) { Storage(navController) }
-            composable(NavConstants.SETTINGS) { Settings() }
+            composable(NavConstants.SETTINGS) { Settings(navController) }
             composable(NavConstants.NOTE) { backStackEntry ->
                 val id = backStackEntry.arguments?.getString("id")!!.toInt()
                 NoteScreen(id, onBack = { navController.popBackStack() })
             }
+            composable(NavConstants.DELETED){ DeletedScreen(navController) }
         }
     }
 }

@@ -25,7 +25,6 @@ class RecordingViewModel(application: Application): AndroidViewModel(application
     private var job: Job? = null
     private var recognizer: Recognizer? = null
 
-
     var text: String by mutableStateOf("")
     var isEditable by mutableStateOf(false)
     var isRecording by mutableStateOf(false)

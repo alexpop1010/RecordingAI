@@ -5,4 +5,5 @@ object NavConstants {
     const val STORAGE = "storage"
     const val SETTINGS = "settings"
     const val NOTE = "note/{id}"
+    const val DELETED = "deleted"
 }

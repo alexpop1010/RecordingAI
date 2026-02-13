@@ -12,19 +12,23 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.*
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.tapp.recordingai.DeletedScreen
-import com.tapp.recordingai.NavConstants
-import com.tapp.recordingai.notes.NoteScreen
+import com.tapp.recordingai.utils.NavConstants
+import com.tapp.recordingai.view.notes.NoteScreen
 import com.tapp.recordingai.R
-import com.tapp.recordingai.recording.Recording
-import com.tapp.recordingai.settings.Settings
-import com.tapp.recordingai.notes.Storage
-import com.tapp.recordingai.recording.RecordingViewModel
+import com.tapp.recordingai.view.recording.Recording
+import com.tapp.recordingai.view.settings.Settings
+import com.tapp.recordingai.view.notes.Storage
+import com.tapp.recordingai.viewmodel.notes.NoteViewModel
+import com.tapp.recordingai.viewmodel.recording.RecordingViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun StartNavigation(recordingViewModel: RecordingViewModel) {
+fun StartNavigation() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val recordingViewModel: RecordingViewModel = koinViewModel()
+    val noteViewModel: NoteViewModel = koinViewModel()
 
     Scaffold(
         bottomBar = {
@@ -124,7 +128,7 @@ fun StartNavigation(recordingViewModel: RecordingViewModel) {
             startDestination = NavConstants.RECORDING,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(NavConstants.RECORDING) { Recording(viewModel = recordingViewModel) }
+            composable(NavConstants.RECORDING) { Recording(viewModel = recordingViewModel, viewModelNote = noteViewModel) }
             composable(NavConstants.STORAGE) { Storage(navController) }
             composable(NavConstants.SETTINGS) { Settings(navController) }
             composable(NavConstants.NOTE) { backStackEntry ->

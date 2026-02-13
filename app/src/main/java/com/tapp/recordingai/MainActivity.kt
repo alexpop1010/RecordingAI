@@ -3,30 +3,19 @@ package com.tapp.recordingai
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tapp.recordingai.navigation.StartNavigation
-import com.tapp.recordingai.recording.RecordingViewModel
-import com.tapp.recordingai.settings.LanguageSet
 import com.tapp.recordingai.ui.theme.RecordingAITheme
-
-import androidx.appcompat.app.AppCompatActivity
+import com.tapp.recordingai.utils.LanguageSet
 
 class MainActivity : AppCompatActivity() {
-
-    private val recViewModel: RecordingViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         LanguageSet.applySavedLanguage(this)
         super.onCreate(savedInstanceState)
-
-        enableEdgeToEdge()
 
         if (ContextCompat.checkSelfPermission(
                 this,
@@ -42,13 +31,8 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             RecordingAITheme {
-                StartNavigation(recViewModel)
+                StartNavigation()
             }
         }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        recViewModel.pausingRecord()
     }
 }

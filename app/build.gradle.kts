@@ -1,11 +1,21 @@
+import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("org.jetbrains.kotlin.kapt")
 }
-val openAiKey: String =
-    project.findProperty("OPENAI_API_KEY") as String? ?: ""
+
+
+val localProperties = Properties().apply {
+    rootProject.file("local.properties")
+        .takeIf { it.exists() }
+        ?.inputStream()
+        ?.use { load(it) }
+}
+
+val openAiKey = localProperties.getProperty("OPENAI_API_KEY") ?: ""
+
 android {
     namespace = "com.tapp.recordingai"
     compileSdk = 36
@@ -71,8 +81,11 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("org.json:json:20240303")
-    implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("io.insert-koin:koin-android:3.5.3")
+
+    implementation("io.insert-koin:koin-androidx-compose:3.5.3")
+
 
 
 }

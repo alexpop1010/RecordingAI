@@ -11,9 +11,14 @@ import com.tapp.recordingai.model.db.DeletedNote
 import com.tapp.recordingai.model.db.DeletedNoteDao
 import com.tapp.recordingai.model.db.Note
 import com.tapp.recordingai.model.db.NoteDao
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 class NoteViewModel(
     private val noteDao: NoteDao,
@@ -30,6 +35,21 @@ class NoteViewModel(
     var notes by mutableStateOf<List<Note>>(emptyList())
         private set
 
+    var notesSearchQuery by mutableStateOf("")
+        private set
+
+    fun onNotesSearchQueryChange(value: String) {
+        notesSearchQuery = value
+    }
+
+    fun filteredStorageNotes(): List<Note> {
+        val q = notesSearchQuery.trim()
+        if (q.isEmpty()) return notes
+        return notes.filter { note -> note.matchesStorageSearch(q) }
+    }
+
+    private val structureJobs = ConcurrentHashMap<Int, Job>()
+
     fun changeTitle(value: String) {
         title = value
     }
@@ -39,27 +59,17 @@ class NoteViewModel(
     }
 
     suspend fun addNoteAndReturn(note: Note): Note {
-        Log.d("DEBUG_FLOW", "addNoteAndReturn INPUT text='${note.text}'")
-
         val id = noteDao.insertNote(note)
         val saved = note.copy(id = id.toInt())
-
-        Log.d("DEBUG_FLOW", "addNoteAndReturn OUTPUT text='${saved.text}'")
-
         return saved
     }
 
     fun structureNoteWithAi(noteId: Int) {
-        viewModelScope.launch {
-
+        structureJobs[noteId]?.cancel()
+        val job = viewModelScope.launch {
             val originalNote = withContext(Dispatchers.IO) {
                 noteDao.getNoteById(noteId)
             } ?: return@launch
-
-            Log.d(
-                "DEBUG_FLOW",
-                "Note FROM DB before AI: id=${originalNote.id}, text='${originalNote.text}'"
-            )
 
             withContext(Dispatchers.IO) {
                 noteDao.updateNote(
@@ -68,31 +78,39 @@ class NoteViewModel(
             }
             loadAllNotes()
 
-            try {
-                val structuredText = aiService.structureText(originalNote.text)
-
-                Log.d("DEBUG_FLOW", "AI RESULT text='$structuredText'")
-
-                withContext(Dispatchers.IO) {
-                    noteDao.updateNote(
-                        originalNote.copy(
-                            text = structuredText,
-                            status = NoteStatus.NORMAL
-                        )
-                    )
+            val finalText = try {
+                withTimeout(120_000) {
+                    aiService.structureText(originalNote.text)
                 }
+            } catch (_: TimeoutCancellationException) {
+                originalNote.text
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                withContext(Dispatchers.IO) {
-                    noteDao.updateNote(
-                        originalNote.copy(status = NoteStatus.NORMAL)
+                Log.w("NoteViewModel", "structureText failed", e)
+                originalNote.text
+            }
+
+            val latest = withContext(Dispatchers.IO) {
+                noteDao.getNoteById(noteId)
+            } ?: return@launch
+
+            withContext(Dispatchers.IO) {
+                noteDao.updateNote(
+                    latest.copy(
+                        text = finalText,
+                        status = NoteStatus.NORMAL
                     )
-                }
+                )
             }
 
             loadAllNotes()
         }
+        structureJobs[noteId] = job
+        job.invokeOnCompletion {
+            structureJobs.remove(noteId, job)
+        }
     }
-
     suspend fun getNoteById(id: Int): Note? =
         withContext(Dispatchers.IO) {
             noteDao.getNoteById(id)
@@ -126,6 +144,8 @@ class NoteViewModel(
     }
 
     fun deleteNote(note: Note) {
+        structureJobs[note.id]?.cancel()
+        structureJobs.remove(note.id)
         viewModelScope.launch(Dispatchers.IO) {
             val deletedNote = DeletedNote(
                 id = note.id,
@@ -146,4 +166,16 @@ class NoteViewModel(
             noteDao.getAll()
         }
     }
+}
+
+private fun Note.matchesStorageSearch(query: String): Boolean {
+    val q = query.trim()
+    if (q.isEmpty()) return true
+    if (noteName.contains(q, ignoreCase = true)) return true
+    if (text.contains(q, ignoreCase = true)) return true
+    if (noteName.isBlank()) {
+        if ("Заметка $id".contains(q, ignoreCase = true)) return true
+        if ("Note $id".contains(q, ignoreCase = true)) return true
+    }
+    return false
 }

@@ -7,7 +7,6 @@ import androidx.room.Query
 
 @Dao
 interface RecordStateDao {
-
     @Query("SELECT * FROM RecordState WHERE id = 0 LIMIT 1")
     suspend fun getText(): RecordState?
 

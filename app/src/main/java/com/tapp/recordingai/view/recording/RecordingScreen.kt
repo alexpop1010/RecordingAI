@@ -1,5 +1,10 @@
 package com.tapp.recordingai.view.recording
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -7,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
@@ -24,10 +30,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.tapp.recordingai.R
 import com.tapp.recordingai.model.db.Note
 import com.tapp.recordingai.viewmodel.notes.NoteViewModel
 import com.tapp.recordingai.viewmodel.recording.RecordingViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -39,12 +47,38 @@ fun Recording(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) {
+        viewModel.startRecording()
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                viewModel.startRecording()
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.initRecognizer(context)
         viewModel.loadSavedTextIfNeeded()
     }
 
     LaunchedEffect(viewModel.text) {
+        delay(1)
         scrollState.animateScrollTo(scrollState.maxValue)
     }
 
@@ -73,7 +107,27 @@ fun Recording(
                     if (viewModel.isRecording) {
                         viewModel.stopRecording()
                     } else {
-                        viewModel.startRecording()
+                        val hasPermission = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+
+                        if (hasPermission) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.POST_NOTIFICATIONS
+                                ) != PackageManager.PERMISSION_GRANTED
+                            ) {
+                                notificationPermissionLauncher.launch(
+                                    Manifest.permission.POST_NOTIFICATIONS
+                                )
+                            } else {
+                                viewModel.startRecording()
+                            }
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
                     }
                 },
             contentAlignment = Alignment.Center
@@ -110,25 +164,30 @@ fun Recording(
 
         Spacer(Modifier.height(8.dp))
 
-        TextField(
-            value = viewModel.text,
-            onValueChange = viewModel::onTextChanged,
-            placeholder = { Text(stringResource(R.string.notes)) },
-            maxLines = Int.MAX_VALUE,
+        Column(
             modifier = Modifier
+                .weight(1f)
                 .fillMaxWidth()
-                .weight(1f),
-            textStyle = TextStyle(fontSize = 22.sp),
-            enabled = viewModel.isEditable,
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                disabledContainerColor = Color.White,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
+                .verticalScroll(scrollState)
+        ) {
+            TextField(
+                value = viewModel.text,
+                onValueChange = viewModel::onTextChanged,
+                placeholder = { Text(stringResource(R.string.notes)) },
+                maxLines = Int.MAX_VALUE,
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = TextStyle(fontSize = 22.sp),
+                enabled = viewModel.isEditable,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    disabledContainerColor = Color.White,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
+                )
             )
-        )
+        }
 
         Spacer(Modifier.height(12.dp))
 
@@ -188,4 +247,3 @@ fun Recording(
         )
     }
 }
-

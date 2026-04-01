@@ -30,5 +30,16 @@
     <string name="back">Назад</string>
     <string name="recently_deleted">Недавно удалённые</string>
     <string name="no_deleted_notes">Удалённых заметок нет</string>
+    <string name="note_default_title">Заметка %1$d</string>
+    <string name="note_ai_processing">Идёт структурирование…</string>
+    <string name="delete_note">Удалить</string>
+    <string name="edit">Редактировать</string>
+    <string name="restore">Восстановить</string>
+    <string name="dictation_channel_name">Голосовой ввод</string>
+    <string name="dictation_notification_title">Идёт запись речи</string>
+    <string name="dictation_notification_text">Распознавание активно — вернитесь в приложение, чтобы остановить</string>
+    <string name="notes_search_hint">Найти</string>
+    <string name="notes_search_clear">Очистить поиск</string>
+    <string name="notes_search_no_results">Ничего не найдено</string>
 
 </resources>

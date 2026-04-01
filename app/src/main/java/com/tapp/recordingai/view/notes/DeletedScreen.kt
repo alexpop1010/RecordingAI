@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.tapp.recordingai.model.db.Note
 import com.tapp.recordingai.viewmodel.notes.DeletedNotesViewModel
@@ -29,36 +28,45 @@ fun DeletedScreen(
     LaunchedEffect(Unit) {
         viewModel.loadNotes()
     }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
-        Box(
+
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = stringResource(R.string.back),
                 fontSize = 18.sp,
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .clickable { navController.popBackStack() }
+                modifier = Modifier.clickable {
+                    navController.popBackStack()
+                }
             )
 
-            Text(
-                text = stringResource(R.string.recently_deleted),
-                fontSize = 20.sp,
-                modifier = Modifier.align(Alignment.Center)
-            )
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.recently_deleted),
+                    fontSize = 20.sp
+                )
+            }
         }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
                 .background(Color(0xFFE0E0E0))
         )
+
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -76,6 +84,7 @@ fun DeletedScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(top = 8.dp)
+                        .padding(horizontal = 16.dp)
                 ) {
                     items(viewModel.notes) { deletedNote ->
                         ItemNotes(
@@ -95,7 +104,3 @@ fun DeletedScreen(
         }
     }
 }
-
-
-
-

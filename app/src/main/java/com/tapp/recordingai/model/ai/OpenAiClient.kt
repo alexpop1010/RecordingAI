@@ -1,19 +1,18 @@
 package com.tapp.recordingai.model.ai
 
-
-
 import android.util.Log
 import com.tapp.recordingai.BuildConfig
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class OpenAiClient {
 
@@ -29,13 +28,14 @@ class OpenAiClient {
 
     private val client = OkHttpClient.Builder()
         .addInterceptor(logger)
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(120, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
+        .callTimeout(35, TimeUnit.SECONDS)
         .build()
 
     suspend fun call(prompt: String): String =
-        withContext(Dispatchers.IO) {
+        suspendCancellableCoroutine { cont ->
 
             val bodyJson = JSONObject().apply {
                 put("model", "gpt-4.1-mini")
@@ -55,32 +55,57 @@ class OpenAiClient {
                 )
                 .build()
 
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    throw IOException(
-                        "OpenAI error ${response.code}: ${
-                            response.body?.string()
-                        }"
-                    )
+            val call = client.newCall(request)
+
+
+            cont.invokeOnCancellation {
+                call.cancel()
+            }
+
+            call.enqueue(object : Callback {
+
+                override fun onFailure(call: Call, e: IOException) {
+                    if (cont.isCancelled) return
+                    cont.resumeWithException(e)
                 }
 
-                val rawJson = response.body?.string()
-                    ?: throw IOException("Empty response")
+                override fun onResponse(call: Call, response: Response) {
+                    response.use {
 
-                val root = JSONObject(rawJson)
-                val output = root.getJSONArray("output")
-                val content = output
-                    .getJSONObject(0)
-                    .getJSONArray("content")
+                        if (!response.isSuccessful) {
+                            cont.resumeWithException(
+                                IOException("HTTP ${response.code}")
+                            )
+                            return
+                        }
 
-                for (i in 0 until content.length()) {
-                    val obj = content.getJSONObject(i)
-                    if (obj.optString("type") == "output_text") {
-                        return@withContext obj.optString("text")
+                        val rawJson = response.body?.string()
+                            ?: run {
+                                cont.resumeWithException(
+                                    IOException("Empty body")
+                                )
+                                return
+                            }
+
+                        val root = JSONObject(rawJson)
+                        val output = root.getJSONArray("output")
+                        val content = output
+                            .getJSONObject(0)
+                            .getJSONArray("content")
+
+                        for (i in 0 until content.length()) {
+                            val obj = content.getJSONObject(i)
+                            if (obj.optString("type") == "output_text") {
+                                cont.resume(obj.optString("text"))
+                                return
+                            }
+                        }
+
+                        cont.resumeWithException(
+                            IOException("No output_text")
+                        )
                     }
                 }
-
-                throw IOException("No output_text found")
-            }
+            })
         }
 }

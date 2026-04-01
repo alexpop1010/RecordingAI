@@ -3,6 +3,8 @@ package com.tapp.recordingai.view.settings
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -52,7 +54,6 @@ fun Settings(navController: NavController) {
             .padding(top = 32.dp)
             .background(Color.White)
     ) {
-
         Text(
             text = stringResource(R.string.settings),
             fontSize = 22.sp,
@@ -105,7 +106,12 @@ fun Settings(navController: NavController) {
 
         SimpleRow(
             title = stringResource(R.string.writeSup),
-            showArrow = true
+            showArrow = true,
+            onClick = {
+                val url = "https://t.me/falencigHelp"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                context.startActivity(intent)
+            }
         )
     }
 }

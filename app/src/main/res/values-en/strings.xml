@@ -13,8 +13,13 @@
     <string name="basic">Basic</string>
     <string name="upToPro">Upgrade to Pro</string>
     <string name="prefs">Preferences</string>
-    <string name="sysLanguage">System language</string>
-    <string name="chose">Choose language</string>
+    <string name="language_section_title">App language &amp; speech</string>
+    <string name="language_system">Same as device</string>
+    <string name="language_system_hint">UI and speech follow the device language</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_russian_hint">Russian UI and ru-RU speech</string>
+    <string name="language_english">English</string>
+    <string name="language_english_hint">English UI and en-US speech</string>
     <string name="storage">Storage</string>
     <string name="deleted">Recently deleted</string>
     <string name="deleted30">Contains notes deleted within 30 days</string>
@@ -44,5 +49,14 @@
     <string name="notes_search_hint">Search</string>
     <string name="notes_search_clear">Clear search</string>
     <string name="notes_search_no_results">No results</string>
+    <string name="content_desc_save_note">Save</string>
+    <string name="content_desc_share_note">Share</string>
+    <string name="content_desc_note_more">More actions</string>
+    <string name="note_action_share">Share text</string>
+    <string name="note_action_copy">Copy</string>
+    <string name="note_action_export_txt">Export .txt</string>
+    <string name="note_action_export_pdf">Export PDF</string>
+    <string name="note_copied">Copied to clipboard</string>
+    <string name="note_export_failed">Could not export</string>
 
 </resources>

@@ -79,7 +79,8 @@ class NoteViewModel(
             loadAllNotes()
 
             val finalText = try {
-                withTimeout(120_000) {
+                // Длинные лекции: много чанков + иерархическое слияние (до десятков минут).
+                withTimeout(3_600_000) {
                     aiService.structureText(originalNote.text)
                 }
             } catch (_: TimeoutCancellationException) {

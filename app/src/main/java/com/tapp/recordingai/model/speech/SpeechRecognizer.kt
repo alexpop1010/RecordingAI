@@ -9,6 +9,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
+import com.tapp.recordingai.utils.LanguageSet
 
 class Recognizer(
     context: Context,
@@ -16,20 +17,26 @@ class Recognizer(
     private val onFinal: (String) -> Unit
 ) {
 
-    private val recognizer =
-        SpeechRecognizer.createSpeechRecognizer(context.applicationContext)
+    private val appContext = context.applicationContext
 
-    private val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-        putExtra(
-            RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-        )
-        putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ru-RU")
-        putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-        putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
-    }
+    private val recognizer =
+        SpeechRecognizer.createSpeechRecognizer(appContext)
 
     private val mainHandler = Handler(Looper.getMainLooper())
+
+    private fun listenIntent(): Intent =
+        Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+            )
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE,
+                LanguageSet.getSpeechLanguageTag(appContext)
+            )
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+        }
 
     init {
         recognizer.setRecognitionListener(object : RecognitionListener {
@@ -56,7 +63,6 @@ class Recognizer(
             }
 
             override fun onError(error: Int) {
-                // После cancel() (стоп записи) и при перезапуске сессии часто приходит ERROR_CLIENT — не перезапускать.
                 if (error == SpeechRecognizer.ERROR_CLIENT) return
                 if (!isListening) return
 
@@ -81,8 +87,8 @@ class Recognizer(
     fun start() {
         if (isListening) return
         isListening = true
-        Log.d("speech", "startListening")
-        recognizer.startListening(intent)
+        Log.d("speech", "startListening lang=${LanguageSet.getSpeechLanguageTag(appContext)}")
+        recognizer.startListening(listenIntent())
     }
 
     fun stop() {
@@ -92,16 +98,12 @@ class Recognizer(
         recognizer.cancel()
     }
 
-    /**
-     * После [onResults] сессия уже завершена — не вызывать [SpeechRecognizer.cancel],
-     * иначе прилетит ERROR_CLIENT и сломает следующий цикл распознавания.
-     */
     private fun scheduleListenAgainAfterResult() {
         if (!isListening) return
         mainHandler.post {
             if (!isListening) return@post
             try {
-                recognizer.startListening(intent)
+                recognizer.startListening(listenIntent())
             } catch (e: Exception) {
                 Log.w("speech", "listen again after result failed", e)
             }
@@ -114,7 +116,7 @@ class Recognizer(
         mainHandler.post {
             if (!isListening) return@post
             try {
-                recognizer.startListening(intent)
+                recognizer.startListening(listenIntent())
             } catch (e: Exception) {
                 Log.w("speech", "listen again after error failed", e)
             }

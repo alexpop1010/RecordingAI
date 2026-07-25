@@ -1,5 +1,10 @@
 package com.tapp.recordingai.view.recording
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -7,8 +12,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -24,10 +31,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.tapp.recordingai.R
 import com.tapp.recordingai.model.db.Note
 import com.tapp.recordingai.viewmodel.notes.NoteViewModel
 import com.tapp.recordingai.viewmodel.recording.RecordingViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -39,22 +48,50 @@ fun Recording(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) {
+        viewModel.startRecording()
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                viewModel.startRecording()
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
-        viewModel.initRecognizer(context)
         viewModel.loadSavedTextIfNeeded()
     }
 
     LaunchedEffect(viewModel.text) {
+        delay(1)
         scrollState.animateScrollTo(scrollState.maxValue)
     }
 
-    var showSaveDialog by remember { mutableStateOf(false) }
-    var savedNote by remember { mutableStateOf<Note?>(null) }
+    var showSaveOptionsDialog by remember { mutableStateOf(false) }
+    var showFolderPicker by remember { mutableStateOf(false) }
+    var pendingStructureWithAi by remember { mutableStateOf(false) }
+
+    val scheme = MaterialTheme.colorScheme
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(scheme.background)
             .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -66,14 +103,39 @@ fun Recording(
                 .size(72.dp)
                 .clip(RoundedCornerShape(36.dp))
                 .background(
-                    if (viewModel.isRecording) Color(0xFFE53935)
-                    else Color(0xFF42A5F5)
+                    when {
+                        viewModel.isRecording -> Color(0xFFE53935)
+                        !viewModel.isRecognizerReady ->
+                            scheme.onSurface.copy(alpha = 0.22f)
+                        else -> scheme.primary
+                    }
                 )
                 .clickable {
                     if (viewModel.isRecording) {
                         viewModel.stopRecording()
                     } else {
-                        viewModel.startRecording()
+                        if (!viewModel.isRecognizerReady) return@clickable
+                        val hasPermission = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+
+                        if (hasPermission) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.POST_NOTIFICATIONS
+                                ) != PackageManager.PERMISSION_GRANTED
+                            ) {
+                                notificationPermissionLauncher.launch(
+                                    Manifest.permission.POST_NOTIFICATIONS
+                                )
+                            } else {
+                                viewModel.startRecording()
+                            }
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
                     }
                 },
             contentAlignment = Alignment.Center
@@ -89,12 +151,13 @@ fun Recording(
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = if (viewModel.isRecording)
-                stringResource(R.string.stopRecording)
-            else
-                stringResource(R.string.startRecording),
+            text = when {
+                viewModel.isRecording -> stringResource(R.string.stopRecording)
+                !viewModel.isRecognizerReady -> stringResource(R.string.recognizer_preparing)
+                else -> stringResource(R.string.startRecording)
+            },
             fontSize = 14.sp,
-            color = Color.Gray
+            color = scheme.onSurfaceVariant
         )
 
         Spacer(Modifier.height(24.dp))
@@ -102,7 +165,7 @@ fun Recording(
         Text(
             text = stringResource(R.string.ai),
             fontSize = 18.sp,
-            color = Color.Black,
+            color = scheme.onSurface,
             modifier = Modifier
                 .align(Alignment.Start)
                 .padding(start = 16.dp)
@@ -110,25 +173,35 @@ fun Recording(
 
         Spacer(Modifier.height(8.dp))
 
-        TextField(
-            value = viewModel.text,
-            onValueChange = viewModel::onTextChanged,
-            placeholder = { Text(stringResource(R.string.notes)) },
-            maxLines = Int.MAX_VALUE,
+        Column(
             modifier = Modifier
+                .weight(1f)
                 .fillMaxWidth()
-                .weight(1f),
-            textStyle = TextStyle(fontSize = 22.sp),
-            enabled = viewModel.isEditable,
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                disabledContainerColor = Color.White,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
+                .verticalScroll(scrollState)
+        ) {
+            TextField(
+                value = viewModel.text,
+                onValueChange = viewModel::onTextChanged,
+                placeholder = {
+                    Text(
+                        stringResource(R.string.notes),
+                        color = scheme.onSurfaceVariant
+                    )
+                },
+                maxLines = Int.MAX_VALUE,
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = TextStyle(fontSize = 22.sp),
+                enabled = viewModel.isEditable,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = scheme.background,
+                    unfocusedContainerColor = scheme.background,
+                    disabledContainerColor = scheme.background,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
+                )
             )
-        )
+        }
 
         Spacer(Modifier.height(12.dp))
 
@@ -136,13 +209,8 @@ fun Recording(
             onClick = {
                 if (viewModel.text.isNotBlank()) {
                     scope.launch {
-                        savedNote = viewModelNote.addNoteAndReturn(
-                            Note(
-                                noteName = "",
-                                text = viewModel.text
-                            )
-                        )
-                        showSaveDialog = true
+                        viewModelNote.loadAllNotes()
+                        showSaveOptionsDialog = true
                     }
                 }
             },
@@ -153,15 +221,16 @@ fun Recording(
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent,
                 disabledContainerColor = Color.Transparent,
-                contentColor = Color(0xFF42A5F5),
-                disabledContentColor = Color(0xFFB0BEC5)
+                contentColor = scheme.primary,
+                disabledContentColor = scheme.outline.copy(alpha = 0.8f)
             ),
             border = BorderStroke(
                 width = 1.dp,
-                color = if (!viewModel.isRecording)
-                    Color(0xFF42A5F5)
-                else
-                    Color(0xFFB0BEC5)
+                color = if (!viewModel.isRecording) {
+                    scheme.primary
+                } else {
+                    scheme.outline.copy(alpha = 0.6f)
+                }
             ),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -171,21 +240,51 @@ fun Recording(
         Spacer(Modifier.height(16.dp))
     }
 
-    if (showSaveDialog && savedNote != null) {
+    if (showSaveOptionsDialog) {
         SaveNoteDialog(
-            onDismiss = { showSaveDialog = false },
+            isPreSave = true,
+            onDismiss = { showSaveOptionsDialog = false },
             onKeep = {
-                viewModel.onTextChanged("")
-                viewModel.clearSavedText()
-                showSaveDialog = false
+                pendingStructureWithAi = false
+                showSaveOptionsDialog = false
+                showFolderPicker = true
             },
             onStructure = {
-                viewModelNote.structureNoteWithAi(savedNote!!.id)
+                pendingStructureWithAi = true
+                showSaveOptionsDialog = false
+                showFolderPicker = true
+            }
+        )
+    }
+
+    if (showFolderPicker) {
+        RecordingFolderPickerDialog(
+            folders = viewModelNote.folders,
+            onDismiss = {
+                showFolderPicker = false
+                pendingStructureWithAi = false
+            },
+            onConfirmed = { existingFolderId, newFolderName ->
+                val folderId = if (!newFolderName.isNullOrBlank()) {
+                    viewModelNote.createFolderAndGetId(newFolderName.trim())
+                } else {
+                    existingFolderId
+                }
+                val saved = viewModelNote.addNoteAndReturn(
+                    Note(
+                        noteName = "",
+                        text = viewModel.text,
+                        folderId = folderId
+                    )
+                )
+                showFolderPicker = false
+                if (pendingStructureWithAi) {
+                    viewModelNote.structureNoteWithAi(saved.id)
+                }
+                pendingStructureWithAi = false
                 viewModel.onTextChanged("")
                 viewModel.clearSavedText()
-                showSaveDialog = false
             }
         )
     }
 }
-

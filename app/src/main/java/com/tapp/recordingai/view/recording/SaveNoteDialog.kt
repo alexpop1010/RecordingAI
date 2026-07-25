@@ -9,12 +9,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -25,17 +25,22 @@ import com.tapp.recordingai.R
 fun SaveNoteDialog(
     onDismiss: () -> Unit,
     onKeep: () -> Unit,
-    onStructure: () -> Unit
+    onStructure: () -> Unit,
+    isPreSave: Boolean = false
 ) {
+    val titleRes = if (isPreSave) R.string.save_note_before_title else R.string.note_saved_title
+    val subtitleRes = if (isPreSave) null else R.string.note_saved_subtitle
+    val scheme = MaterialTheme.colorScheme
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color.White,
+        containerColor = scheme.surface,
         title = {
             Text(
-                text = stringResource(R.string.note_saved_title),
+                text = stringResource(titleRes),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                fontSize = 22.sp
+                fontSize = 22.sp,
+                color = scheme.onSurface
             )
         },
         text = {
@@ -43,22 +48,25 @@ fun SaveNoteDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = stringResource(R.string.note_saved_subtitle),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    color = Color.Gray
-                )
-
-                Spacer(Modifier.height(16.dp))
+                if (subtitleRes != null) {
+                    Text(
+                        text = stringResource(subtitleRes),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        color = scheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(16.dp))
+                } else {
+                    Spacer(Modifier.height(8.dp))
+                }
 
                 OutlinedButton(
                     onClick = onStructure,
                     modifier = Modifier.width(220.dp),
                     shape = RoundedCornerShape(24.dp),
-                    border = BorderStroke(1.dp, Color(0xFF42A5F5)),
+                    border = BorderStroke(1.dp, scheme.primary),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFF42A5F5)
+                        contentColor = scheme.primary
                     )
                 ) {
                     Text(
@@ -73,9 +81,9 @@ fun SaveNoteDialog(
                     onClick = onKeep,
                     modifier = Modifier.width(220.dp),
                     shape = RoundedCornerShape(24.dp),
-                    border = BorderStroke(1.dp, Color(0xFF42A5F5)),
+                    border = BorderStroke(1.dp, scheme.primary),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFF42A5F5)
+                        contentColor = scheme.primary
                     )
                 ) {
                     Text(

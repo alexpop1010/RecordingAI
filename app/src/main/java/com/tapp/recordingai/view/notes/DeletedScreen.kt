@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.tapp.recordingai.R
 import com.tapp.recordingai.model.db.Note
 import com.tapp.recordingai.viewmodel.notes.DeletedNotesViewModel
 import com.tapp.recordingai.view.notes.ItemNotes
@@ -32,10 +34,12 @@ fun DeletedScreen(
         viewModel.loadNotes()
     }
 
+    val scheme = MaterialTheme.colorScheme
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(scheme.background)
     ) {
 
         Row(
@@ -58,7 +62,8 @@ fun DeletedScreen(
             ) {
                 Text(
                     text = stringResource(R.string.recently_deleted),
-                    fontSize = 20.sp
+                    fontSize = 20.sp,
+                    color = scheme.onSurface
                 )
             }
         }
@@ -67,7 +72,7 @@ fun DeletedScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(Color(0xFFE0E0E0))
+                .background(scheme.outline.copy(alpha = 0.45f))
         )
 
         Box(
@@ -78,7 +83,7 @@ fun DeletedScreen(
             if (viewModel.notes.isEmpty()) {
                 Text(
                     text = stringResource(R.string.no_deleted_notes),
-                    color = Color.Gray,
+                    color = scheme.onSurfaceVariant,
                     modifier = Modifier.padding(16.dp)
                 )
             } else {
@@ -97,9 +102,12 @@ fun DeletedScreen(
                                 text = deletedNote.text
                             ),
                             onClick = {},
+                            onRequestMoveToFolder = null,
                             onDelete = {
                                 viewModel.deleteForever(deletedNote)
-                            }
+                            },
+                            deleteConfirmTitleRes = R.string.note_delete_forever_confirm_title,
+                            deleteConfirmMessageRes = R.string.note_delete_forever_confirm_message
                         )
                     }
                 }

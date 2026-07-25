@@ -1,7 +1,11 @@
 package com.tapp.recordingai.view.notes
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
@@ -16,11 +21,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,13 +35,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.tapp.recordingai.R
-import com.tapp.recordingai.utils.NoteShareHelper
 import com.tapp.recordingai.viewmodel.notes.NoteViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -47,46 +52,29 @@ fun NoteScreen(
     onBack: () -> Unit = {},
     viewModel: NoteViewModel = koinViewModel()
 ) {
+    var isEditing by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+    val scheme = MaterialTheme.colorScheme
     val context = LocalContext.current
+    val openImageDocument = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        runCatching {
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        }
+        val tag = "![image]($uri)"
+        val nextText = if (viewModel.text.isBlank()) tag else "${viewModel.text}\n\n$tag"
+        viewModel.changeText(nextText)
+    }
 
     LaunchedEffect(idNote) {
         val note = viewModel.getNoteById(idNote)
         viewModel.showNote(note)
     }
-
-    var isEditing by remember { mutableStateOf(false) }
-    var menuExpanded by remember { mutableStateOf(false) }
-    val scrollState = rememberScrollState()
-
-    fun noteSubject(): String =
-        viewModel.title.ifBlank {
-            context.getString(R.string.note_default_title, idNote)
-        }
-
-    fun noteBodyForShare(): String {
-        val t = viewModel.title.trim()
-        val b = viewModel.text.trim()
-        return when {
-            t.isNotBlank() && b.isNotBlank() -> "$t\n\n$b"
-            t.isNotBlank() -> t
-            else -> b
-        }
-    }
-
-    fun sharePlain() {
-        val body = noteBodyForShare()
-        if (body.isBlank()) return
-        NoteShareHelper.sharePlainText(context, noteSubject(), body)
-    }
-
-    fun copyAll() {
-        val body = noteBodyForShare()
-        if (body.isBlank()) return
-        NoteShareHelper.copyToClipboard(context, noteSubject(), body)
-    }
-
-    val hasContent =
-        viewModel.title.isNotBlank() || viewModel.text.isNotBlank()
 
     Column(
         modifier = Modifier
@@ -107,79 +95,23 @@ fun NoteScreen(
                 )
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box {
-                    IconButton(
-                        onClick = { menuExpanded = true },
-                        enabled = hasContent
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.MoreVert,
-                            contentDescription = stringResource(R.string.content_desc_note_more),
-                            tint = if (hasContent) Color.Black else Color.LightGray
-                        )
+            IconButton(
+                onClick = {
+                    if (isEditing) {
+                        viewModel.updateNote(idNote)
                     }
-                    DropdownMenu(
-                        expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.note_action_share)) },
-                            onClick = {
-                                menuExpanded = false
-                                sharePlain()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.note_action_copy)) },
-                            onClick = {
-                                menuExpanded = false
-                                copyAll()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.note_action_export_txt)) },
-                            onClick = {
-                                menuExpanded = false
-                                NoteShareHelper.exportTxtAndShare(
-                                    context,
-                                    viewModel.title.trim(),
-                                    viewModel.text.trim()
-                                )
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.note_action_export_pdf)) },
-                            onClick = {
-                                menuExpanded = false
-                                NoteShareHelper.exportPdfAndShare(
-                                    context,
-                                    viewModel.title.trim(),
-                                    viewModel.text.trim()
-                                )
-                            }
-                        )
-                    }
+                    isEditing = !isEditing
                 }
-
-                IconButton(
-                    onClick = {
-                        if (isEditing) {
-                            viewModel.updateNote(idNote)
-                        }
-                        isEditing = !isEditing
-                    }
-                ) {
-                    Icon(
-                        imageVector = if (isEditing) Icons.Filled.Check else Icons.Filled.Edit,
-                        contentDescription = if (isEditing) {
-                            stringResource(R.string.content_desc_save_note)
-                        } else {
-                            stringResource(R.string.edit)
-                        },
-                        tint = if (isEditing) Color(0xFF4A40FF) else Color.Black
-                    )
-                }
+            ) {
+                Icon(
+                    imageVector = if (isEditing) Icons.Filled.Check else Icons.Filled.Edit,
+                    contentDescription = if (isEditing) {
+                        stringResource(R.string.content_desc_save_note)
+                    } else {
+                        stringResource(R.string.edit)
+                    },
+                    tint = if (isEditing) scheme.primary else scheme.onSurface
+                )
             }
         }
 
@@ -189,14 +121,14 @@ fun NoteScreen(
             BasicTextField(
                 value = viewModel.title,
                 onValueChange = viewModel::changeTitle,
-                textStyle = TextStyle(fontSize = 30.sp, color = Color.Black),
+                textStyle = TextStyle(fontSize = 30.sp, color = scheme.onSurface),
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
             Text(
                 text = viewModel.title,
                 fontSize = 30.sp,
-                color = Color.Black
+                color = scheme.onSurface
             )
         }
 
@@ -214,22 +146,93 @@ fun NoteScreen(
         ) {
 
             if (isEditing) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    IconButton(
+                        onClick = { openImageDocument.launch(arrayOf("image/*")) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Image,
+                            contentDescription = stringResource(R.string.content_desc_add_photo),
+                            tint = scheme.onSurface
+                        )
+                    }
+                }
                 BasicTextField(
                     value = viewModel.text,
                     onValueChange = viewModel::changeText,
-                    textStyle = TextStyle(fontSize = 18.sp, color = Color.Black),
+                    textStyle = TextStyle(fontSize = 18.sp, color = scheme.onSurface),
                     maxLines = Int.MAX_VALUE,
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
-                Text(
+                NoteContent(
                     text = viewModel.text,
-                    fontSize = 18.sp,
-                    color = Color.Black
+                    textColor = scheme.onSurface
                 )
             }
 
             Spacer(modifier = Modifier.height(50.dp))
         }
     }
+}
+
+@Composable
+private fun NoteContent(
+    text: String,
+    textColor: Color
+) {
+    val blocks = remember(text) { parseNoteBlocks(text) }
+    blocks.forEach { block ->
+        when (block) {
+            is NoteBlock.Text -> {
+                if (block.value.isNotBlank()) {
+                    Text(
+                        text = block.value,
+                        fontSize = 18.sp,
+                        color = textColor
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+            }
+            is NoteBlock.Image -> {
+                AsyncImage(
+                    model = block.uri,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+    }
+}
+
+private sealed interface NoteBlock {
+    data class Text(val value: String) : NoteBlock
+    data class Image(val uri: String) : NoteBlock
+}
+
+private fun parseNoteBlocks(text: String): List<NoteBlock> {
+    val regex = Regex("!\\[image\\]\\((content://[^)]+)\\)")
+    val result = mutableListOf<NoteBlock>()
+    var cursor = 0
+    regex.findAll(text).forEach { match ->
+        if (match.range.first > cursor) {
+            result += NoteBlock.Text(text.substring(cursor, match.range.first).trim('\n'))
+        }
+        result += NoteBlock.Image(match.groupValues[1])
+        cursor = match.range.last + 1
+    }
+    if (cursor < text.length) {
+        result += NoteBlock.Text(text.substring(cursor).trim('\n'))
+    }
+    if (result.isEmpty()) {
+        result += NoteBlock.Text(text)
+    }
+    return result
 }

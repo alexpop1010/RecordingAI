@@ -50,13 +50,36 @@
     <string name="notes_search_clear">Clear search</string>
     <string name="notes_search_no_results">No results</string>
     <string name="content_desc_save_note">Save</string>
+    <string name="content_desc_add_photo">Add photo</string>
     <string name="content_desc_share_note">Share</string>
     <string name="content_desc_note_more">More actions</string>
     <string name="note_action_share">Share text</string>
     <string name="note_action_copy">Copy</string>
     <string name="note_action_export_txt">Export .txt</string>
     <string name="note_action_export_pdf">Export PDF</string>
+    <string name="note_action_add_to_folder">Add to folder</string>
+    <string name="note_delete_confirm_title">Delete note?</string>
+    <string name="note_delete_confirm_message">The note will be deleted. You can restore it from Recently deleted.</string>
+    <string name="note_delete_forever_confirm_title">Delete forever?</string>
+    <string name="note_delete_forever_confirm_message">You won\'t be able to restore this note.</string>
     <string name="note_copied">Copied to clipboard</string>
     <string name="note_export_failed">Could not export</string>
+    <string name="save_note_before_title">Save note</string>
+    <string name="recognizer_preparing">Preparing…</string>
+    <string name="save_note_pick_folder_title">Save note to which folder?</string>
+    <string name="storage_folders_section">Folders</string>
+    <string name="storage_tab_notes">Notes</string>
+    <string name="storage_tab_folders_short">Folders</string>
+    <string name="storage_no_folders">No folders yet</string>
+    <string name="folder_delete">Delete folder</string>
+    <string name="folder_delete_confirm_title">Delete folder?</string>
+    <string name="folder_delete_confirm_message">Folder \"%1$s\" will be deleted. Notes inside will stay without a folder.</string>
+    <string name="storage_folder_empty">No notes in this folder yet</string>
+    <string name="folder_unfiled">No folder</string>
+    <string name="folder_new_name_hint">New folder (optional)</string>
+    <string name="folder_create">Create</string>
+    <string name="folder_picker_cancel">Cancel</string>
+    <string name="storage_create_folder">New folder</string>
+    <string name="folder_notes_count">Notes: %1$d</string>
 
 </resources>

@@ -23,6 +23,9 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun getNoteById(id: Int): Note?
 
+    @Query("SELECT COUNT(*) FROM notes WHERE folderId = :folderId")
+    suspend fun countNotesInFolder(folderId: Int): Int
 
-
+    @Query("UPDATE notes SET folderId = NULL WHERE folderId = :folderId")
+    suspend fun clearFolderIdForNotesInFolder(folderId: Int)
 }

@@ -9,6 +9,8 @@ import androidx.lifecycle.viewModelScope
 import com.tapp.recordingai.model.ai.OpenAiService
 import com.tapp.recordingai.model.db.DeletedNote
 import com.tapp.recordingai.model.db.DeletedNoteDao
+import com.tapp.recordingai.model.db.Folder
+import com.tapp.recordingai.model.db.FolderDao
 import com.tapp.recordingai.model.db.Note
 import com.tapp.recordingai.model.db.NoteDao
 import java.util.concurrent.ConcurrentHashMap
@@ -22,6 +24,7 @@ import kotlinx.coroutines.withTimeout
 
 class NoteViewModel(
     private val noteDao: NoteDao,
+    private val folderDao: FolderDao,
     private val deletedNoteDao: DeletedNoteDao,
     private val aiService: OpenAiService
 ) : ViewModel() {
@@ -35,6 +38,15 @@ class NoteViewModel(
     var notes by mutableStateOf<List<Note>>(emptyList())
         private set
 
+    var folders by mutableStateOf<List<Folder>>(emptyList())
+        private set
+
+    var storageBrowse by mutableStateOf<StorageBrowse>(StorageBrowse.Root)
+        private set
+
+    var storageRootTab by mutableStateOf(StorageRootTab.AllNotes)
+        private set
+
     var notesSearchQuery by mutableStateOf("")
         private set
 
@@ -42,10 +54,73 @@ class NoteViewModel(
         notesSearchQuery = value
     }
 
+    fun openStorageBrowse(browse: StorageBrowse) {
+        storageBrowse = browse
+    }
+
+    fun selectStorageRootTab(tab: StorageRootTab) {
+        storageRootTab = tab
+    }
+
     fun filteredStorageNotes(): List<Note> {
         val q = notesSearchQuery.trim()
-        if (q.isEmpty()) return notes
-        return notes.filter { note -> note.matchesStorageSearch(q) }
+        return when (val b = storageBrowse) {
+            is StorageBrowse.Root -> {
+                when {
+                    q.isNotEmpty() ->
+                        notes
+                            .filter { note -> note.matchesStorageSearch(q) }
+                            .sortedByDescending { it.id }
+                    storageRootTab == StorageRootTab.AllNotes ->
+                        notes.sortedByDescending { it.id }
+                    else -> emptyList()
+                }
+            }
+            is StorageBrowse.NotesIn -> {
+                val base = notes.filter { it.folderId == b.folderId }
+                if (q.isEmpty()) base else base.filter { note -> note.matchesStorageSearch(q) }
+            }
+        }
+    }
+
+    fun unfiledNoteCount(): Int = notes.count { it.folderId == null }
+
+    fun noteCountInFolder(folderId: Int): Int = notes.count { it.folderId == folderId }
+
+    suspend fun createFolderAndGetId(name: String): Int {
+        val id = withContext(Dispatchers.IO) {
+            folderDao.insert(Folder(name = name))
+        }
+        loadAllNotes()
+        return id.toInt()
+    }
+
+    suspend fun createFolder(name: String) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return
+        withContext(Dispatchers.IO) {
+            folderDao.insert(Folder(name = trimmed))
+        }
+        loadAllNotes()
+    }
+
+    fun moveNoteToFolder(noteId: Int, folderId: Int?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val note = noteDao.getNoteById(noteId) ?: return@launch
+            noteDao.updateNote(note.copy(folderId = folderId))
+            loadAllNotes()
+        }
+    }
+
+    suspend fun deleteFolder(folderId: Int): Boolean {
+        val ok = withContext(Dispatchers.IO) {
+            val folder = folderDao.getById(folderId) ?: return@withContext false
+            noteDao.clearFolderIdForNotesInFolder(folderId)
+            folderDao.delete(folder)
+            true
+        }
+        if (ok) loadAllNotes()
+        return ok
     }
 
     private val structureJobs = ConcurrentHashMap<Int, Job>()
@@ -79,7 +154,6 @@ class NoteViewModel(
             loadAllNotes()
 
             val finalText = try {
-                // Длинные лекции: много чанков + иерархическое слияние (до десятков минут).
                 withTimeout(3_600_000) {
                     aiService.structureText(originalNote.text)
                 }
@@ -163,9 +237,11 @@ class NoteViewModel(
     }
 
     suspend fun loadAllNotes() {
-        notes = withContext(Dispatchers.IO) {
-            noteDao.getAll()
+        val (allNotes, allFolders) = withContext(Dispatchers.IO) {
+            noteDao.getAll() to folderDao.getAll()
         }
+        notes = allNotes
+        folders = allFolders
     }
 }
 

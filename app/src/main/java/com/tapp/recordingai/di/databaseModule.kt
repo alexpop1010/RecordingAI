@@ -14,6 +14,10 @@ val databaseModule = module {
     }
 
     single {
+        get<AppDatabase>().folderDao()
+    }
+
+    single {
         get<AppDatabase>().deletedNoteDao()
     }
 

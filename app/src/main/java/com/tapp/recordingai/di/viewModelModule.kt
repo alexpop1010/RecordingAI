@@ -13,6 +13,7 @@ val viewModelModule = module {
     viewModel {
         NoteViewModel(
             noteDao = get(),
+            folderDao = get(),
             deletedNoteDao = get(),
             aiService = get()
         )

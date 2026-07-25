@@ -53,6 +53,7 @@ fun Settings(navController: NavController) {
         Text(
             text = stringResource(R.string.settings),
             fontSize = 22.sp,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
         )
 
@@ -141,7 +142,11 @@ fun SelectableLanguageRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            Text(label, fontSize = 16.sp)
+            Text(
+                label,
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             Text(
                 subtitle,
                 fontSize = 12.sp,
@@ -182,7 +187,11 @@ fun SimpleRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
-                Text(title, fontSize = 16.sp)
+                Text(
+                    title,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 if (subtitle != null) {
                     Text(
                         subtitle,
@@ -195,12 +204,15 @@ fun SimpleRow(
             if (rightText != null) {
                 Text(
                     rightText,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
             if (showArrow) {
-                Text(">")
+                Text(
+                    ">",
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }

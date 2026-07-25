@@ -1,7 +1,10 @@
 package com.tapp.recordingai.viewmodel.recording
 
 import android.app.Application
-import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.speech.SpeechRecognizer
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -21,9 +24,29 @@ class RecordingViewModel(
     private val recordStateDao: RecordStateDao,
     private val app: Application
 ) : ViewModel() {
+
     private var recognizer: Recognizer? = null
     var text by mutableStateOf("")
         private set
+
+    /** Готов ли движок распознавания (иначе старт записи даст пустой текст). */
+    var isRecognizerReady by mutableStateOf(false)
+        private set
+
+    var isEditable by mutableStateOf(false)
+        private set
+
+    var isRecording by mutableStateOf(false)
+        private set
+
+    init {
+        val runInit = { initRecognizerInternal() }
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            runInit()
+        } else {
+            Handler(Looper.getMainLooper()).post(runInit)
+        }
+    }
 
     private var speechStablePrefix = ""
     private var speechPartial = ""
@@ -49,34 +72,47 @@ class RecordingViewModel(
         }
     }
 
-    fun initRecognizer(context: Context) {
-        if (recognizer != null) return
-
-        recognizer = Recognizer(
-            context = context.applicationContext,
-            onPartial = { partial ->
-                if (!isRecording) return@Recognizer
-                speechPartial = partial
-                refreshDisplayedText()
-            },
-            onFinal = { result ->
-                if (!isRecording) return@Recognizer
-                if (result.isNotBlank()) {
-                    speechStablePrefix = joinParts(speechStablePrefix, result)
+    private fun initRecognizerInternal() {
+        if (recognizer != null) {
+            isRecognizerReady = true
+            return
+        }
+        if (!SpeechRecognizer.isRecognitionAvailable(app)) {
+            Log.w("RecordingViewModel", "Speech recognition not available on this device")
+            isRecognizerReady = false
+            return
+        }
+        try {
+            recognizer = Recognizer(
+                context = app,
+                onPartial = { partial ->
+                    if (!isRecording) return@Recognizer
+                    speechPartial = partial
+                    refreshDisplayedText()
+                },
+                onFinal = { result ->
+                    if (!isRecording) return@Recognizer
+                    if (result.isNotBlank()) {
+                        speechStablePrefix = joinParts(speechStablePrefix, result)
+                    }
+                    speechPartial = ""
+                    refreshDisplayedText()
                 }
-                speechPartial = ""
-                refreshDisplayedText()
-            }
-        )
+            )
+            isRecognizerReady = true
+        } catch (e: Exception) {
+            Log.w("RecordingViewModel", "Failed to create speech recognizer", e)
+            recognizer = null
+            isRecognizerReady = false
+        }
     }
 
-    var isEditable by mutableStateOf(false)
-        private set
-
-    var isRecording by mutableStateOf(false)
-        private set
-
     fun startRecording() {
+        if (!isRecognizerReady || recognizer == null) {
+            initRecognizerInternal()
+        }
+        if (recognizer == null) return
+
         speechPartial = ""
         speechStablePrefix = text
         isRecording = true

@@ -10,7 +10,8 @@ data class Note(
     val id: Int = 0,
     var noteName: String = "",
     var text: String,
-    val status: NoteStatus = NoteStatus.NORMAL
+    val status: NoteStatus = NoteStatus.NORMAL,
+    val folderId: Int? = null
 )
 
 
